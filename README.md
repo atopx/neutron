@@ -1,6 +1,7 @@
-# spoce
+# neutron
 
-> soc proof of concept engine 
+> Next Generation Vulnerability Scanner.
+
 
 ## Support
 
@@ -19,21 +20,15 @@ go get github.com/atopx/neutron
 package main
 
 import (
-    "log"
+	"log"
+	"sync"
 
-    "github.com/atopx/neutron/build"
-    "github.com/atopx/neutron/library/http"
-    "github.com/atopx/neutron/scanner"
+	"github.com/atopx/neutron/build"
+	"github.com/atopx/neutron/library/http"
+	"github.com/atopx/neutron/scanner"
 )
 
-var urls = []string{
-    "http://117.161.6.2:8180",
-    "https://27.221.68.244:443",
-    "http://13.75.117.202:3000",
-    "https://113.108.174.45:443",
-}
-
-var pocYamlStr = `name: poc-yaml-weblogic-console
+const pocYamlStr = `name: poc-yaml-weblogic-console
 
 rules:
   - method: GET
@@ -43,30 +38,45 @@ rules:
     expression: response.status==200
 `
 
-func logic(poc *build.PocEvent, target string) error {
-    scan, err := scanner.New(poc)
-    if err == nil {
-        var verify bool
-        if poc.Rules != nil {
-            verify, err = scan.Start(target, poc.Rules)
-        } else {
-            verify, err = scan.StartByGroups(target, poc.Groups)
-        }
-        scanner.Release(scan)
-        log.Printf("%s: %v", target, verify)
-    }
-    return err
+var urls = []string{
+	"http://117.161.6.2:8180",
+	"https://27.221.68.244:443",
+	"http://13.75.117.202:3000",
+	"https://113.108.174.45:443",
 }
 
 func main() {
-    http.Setup(20, 5)
-    poc, err := build.NewPocEventWithYamlStr(pocYamlStr)
-    if err != nil {
-        log.Panic(err)
-    }
-    for i := 0; i < len(urls); i++ {
-        logic(poc, urls[i])
-    }
-}
+	http.Setup(5, 5)
+	poc, err := build.NewPocEventWithYamlStr(pocYamlStr)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	scan, err := scanner.New(poc)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer scanner.Release(scan)
+	wg := new(sync.WaitGroup)
+	wg.Add(len(urls))
+
+	for _, url := range urls {
+		go func() {
+			var verify bool
+			if poc.Rules != nil {
+				verify, err = scan.Start(url, poc.Rules)
+			} else {
+				verify, err = scan.StartByGroups(url, poc.Groups)
+			}
+			if err != nil {
+				log.Printf("%s scan failed: %s\n", url, err.Error())
+			} else {
+				log.Printf("%s scan success: %v\n", url, verify)
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+}
 ```
