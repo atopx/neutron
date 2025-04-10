@@ -1,0 +1,11 @@
+[package]
+name = "neutron"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cel-interpreter = { version = "0.9.0", default-features = false }
+chrono = { version = "0.4", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", optional = true }
+serde_yaml = "0.9"

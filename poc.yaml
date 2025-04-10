@@ -1,0 +1,55 @@
+name: poc-yaml-test-payloads
+manual: true
+transport: http
+payloads:
+    payloads:
+        upload1:
+            path: |
+                "upload-srv-1/"
+            body: |
+                "xxxxxxxxxxxx"
+            re: |
+                "aaaaaaaa"
+        upload2:
+            path: |
+                "upload-srv-2/"
+            body: |
+                "xxxxxxxxxxxx"
+            re: |
+                "bbbbbbbb"
+        upload3:
+            path: |
+                "upload-srv-3/"
+            body: |
+                "xxxxxxxxxxxx"
+            re: |
+                "cccccccc"
+        upload4:
+            path: |
+                ""
+            body: |
+                "xxxxxxxxxxxx"
+            re: |
+                "dddddddd"
+rules:
+    r0:
+        request:
+            method: POST
+            path: /admin%20/{{path}}test
+            headers:
+                Content-Type: application/x-www-form-urlencoded
+            body: |
+                "{{body}}"
+        expression: |
+            response.status == 200 && response.body_string.contains("aaaavvvcccc")
+    verify:
+        request:
+            method: GET
+            path: /aaaavvvcccc
+        expression: |
+            re.bmatches(response.body)
+expression: r0() && verify()
+detail:
+    author: Chaitin
+    links:
+        - http://example.com
