@@ -27,6 +27,7 @@ message Response {
   map<string, string> headers = 3;
   string content_type = 4;
   bytes body = 5;
+  string body_string = 6;
 }
 
 message Reverse {

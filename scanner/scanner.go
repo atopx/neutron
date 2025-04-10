@@ -1,10 +1,11 @@
 package scanner
 
 import (
-	"errors"
 	"fmt"
+	"net/url"
 	"strings"
-	"sync"
+
+	"maps"
 
 	"github.com/atopx/neutron/build"
 	"github.com/atopx/neutron/library/decode"
@@ -14,7 +15,6 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-var scannerPool = sync.Pool{New: func() any { return new(scanner) }}
 
 type scanner struct {
 	env *cel.Env
@@ -59,15 +59,17 @@ func (s *scanner) StartByGroups(target string, groups map[string][]build.PocRule
 
 // scan 扫描逻辑
 func (s *scanner) scan(target string, rule *build.PocRule) (bool, error) {
-	urlpath := fmt.Sprintf("%s/%s",
-		strings.TrimRight(target, "/"),
-		strings.TrimLeft(rule.Path, "/"),
-	)
+	
+	set := make(map[string]any, len(s.set))
+	maps.Copy(set, s.set)
+
+	urlpath, _ := url.JoinPath(target, rule.Path)
+
 	request, err := proto.SetupRequest(rule.Method, urlpath, rule.Body, rule.Headers)
 	if err != nil {
 		return false, err
 	}
-	s.set["request"] = request
+	set["request"] = request
 	origin := request.ToFasthttp()
 	response, err := http.Do(origin, rule.FollowRedirects)
 	defer func() {
@@ -82,34 +84,28 @@ func (s *scanner) scan(target string, rule *build.PocRule) (bool, error) {
 		return false, err
 	}
 	if rule.Search != "" {
-		if err = decode.Search(strings.TrimSpace(rule.Search), string(resp.Body), s.set); err != nil {
+		if err = decode.Search(strings.TrimSpace(rule.Search), string(resp.Body), set); err != nil {
 			return false, nil
 		}
 		return true, nil
 	}
-	s.set["response"] = resp
-	out, err := decode.Evaluate(s.env, rule.Expression, s.set)
+	set["response"] = resp
+	out, err := decode.Evaluate(s.env, rule.Expression, set)
 	if err != nil {
-		return false, nil
+		return false, fmt.Errorf("scan failed: %w", err)
 	}
 	return out.Value().(bool), nil
 }
 
-func New(poc *build.PocEvent) (scan *scanner, err error) {
-	if poc == nil {
-		return nil, errors.New("无效的Poc")
+func New(poc *build.PocEvent) ( *scanner, error) {
+	env, err := decode.NewCelEnv(poc.Set)
+	if err != nil {
+		return nil, fmt.Errorf("parse poc env failed: %w", err)
 	}
-	scan = scannerPool.Get().(*scanner)
-	if scan.env, err = decode.NewCelEnv(poc.Set); err != nil {
-		Release(scan)
-		return nil, err
+	scan := &scanner{
+		env: env,
+		set: poc.DecodeSet(env),
 	}
-	scan.set = poc.DecodeSet(scan.env)
 	return scan, nil
 }
 
-func Release(scan *scanner) {
-	scan.env = nil
-	scan.set = nil
-	scannerPool.Put(scan)
-}

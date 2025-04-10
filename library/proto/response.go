@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/atopx/neutron/library/utils"
 	"github.com/valyala/fasthttp"
 )
 
@@ -30,8 +31,8 @@ func SetupResponse(response *fasthttp.Response, req *fasthttp.Request) (*Respons
 	resp.Headers = headers
 	resp.Status = int32(response.StatusCode())
 	resp.ContentType = string(response.Header.Peek("Content-Type"))
-	resp.Body = make([]byte, len(response.Body()))
-	copy(resp.Body, response.Body())
+	resp.Body = response.Body()
+	resp.BodyString = utils.String(resp.Body)
 	return resp, nil
 }
 

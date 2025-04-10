@@ -48,8 +48,5 @@ func Do(request *fasthttp.Request, redirect bool) (response *fasthttp.Response, 
 	} else {
 		err = client.DoTimeout(request, response, dialtimeout)
 	}
-	if err != nil {
-		return response, err
-	}
-	return response, nil
+	return response, err
 }

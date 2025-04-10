@@ -17,7 +17,7 @@ protoc_command = [
 
 try:
     # 执行 protoc 命令
-    subprocess.run(protoc_command, check=True)
+    _ = subprocess.run(protoc_command, check=True)
     print("Protobuf 生成成功！")
 except subprocess.CalledProcessError as e:
     print(f"Protobuf 生成失败: {e}")

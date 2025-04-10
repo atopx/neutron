@@ -13,11 +13,9 @@ import (
 
 	"github.com/atopx/neutron/library/proto"
 	"github.com/atopx/neutron/library/utils"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter/functions"
-	exp "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 var containsStringFunc = &functions.Overload{
@@ -35,8 +33,7 @@ var containsStringFunc = &functions.Overload{
 	},
 }
 
-var stringIContainsStringDecl = decls.NewFunction("icontains", decls.NewInstanceOverload(
-	"string_icontains_string", []*exp.Type{decls.String, decls.String}, decls.Bool))
+// 使用字符串忽略大小写比较
 var stringIContainsStringFunc = &functions.Overload{
 	Operator: "string_icontains_string",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
@@ -52,8 +49,6 @@ var stringIContainsStringFunc = &functions.Overload{
 	},
 }
 
-var bytesBContainsBytesDecl = decls.NewFunction("bcontains", decls.NewInstanceOverload(
-	"bytes_bcontains_bytes", []*exp.Type{decls.Bytes, decls.Bytes}, decls.Bool))
 var bytesBContainsBytesFunc = &functions.Overload{
 	Operator: "bytes_bcontains_bytes",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
@@ -88,10 +83,6 @@ var matchesStringFunc = &functions.Overload{
 	},
 }
 
-var stringBmatchBytesDecl = decls.NewFunction("bmatches",
-	decls.NewInstanceOverload("string_bmatch_bytes",
-		[]*exp.Type{decls.String, decls.Bytes},
-		decls.Bool))
 var stringBmatchBytesFunc = &functions.Overload{
 	Operator: "string_bmatch_bytes",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
@@ -111,25 +102,6 @@ var stringBmatchBytesFunc = &functions.Overload{
 	},
 }
 
-var stringInMapKeyDecl = decls.NewFunction("in", decls.NewInstanceOverload("string_in_map_key",
-	[]*exp.Type{decls.String, decls.NewMapType(decls.String, decls.String)}, decls.Bool))
-var stringInMapKeyFunc = &functions.Overload{
-	Operator: "string_in_map_key",
-	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
-		v1, ok := lhs.(types.String)
-		if !ok {
-			return types.ValOrErr(lhs, "unexpected type '%v' passed to in", lhs.Type())
-		}
-		v2, ok := rhs.(types.Bytes)
-		if !ok {
-			return types.ValOrErr(rhs, "unexpected type '%v' passed to in", lhs.Type())
-		}
-		return types.Bool(bytes.Contains(v2, []byte(v1)))
-	},
-}
-
-var md5StringDecl = decls.NewFunction("md5", decls.NewOverload(
-	"md5_string", []*exp.Type{decls.String}, decls.String))
 var md5StringFunc = &functions.Overload{
 	Operator: "md5_string",
 	Unary: func(value ref.Val) ref.Val {
@@ -141,8 +113,6 @@ var md5StringFunc = &functions.Overload{
 	},
 }
 
-var randomIntDecl = decls.NewFunction("randomInt", decls.NewOverload(
-	"randomInt_int_int", []*exp.Type{decls.Int, decls.Int}, decls.Int))
 var randomIntFunc = &functions.Overload{
 	Operator: "randomInt_int_int",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
@@ -160,8 +130,6 @@ var randomIntFunc = &functions.Overload{
 }
 
 // 指定长度的小写字母组成的随机字符串
-var randomLowercaseDecl = decls.NewFunction("randomLowercase", decls.NewOverload(
-	"randomLowercase_int", []*exp.Type{decls.Int}, decls.String))
 var randomLowercaseFunc = &functions.Overload{
 	Operator: "randomLowercase_int",
 	Unary: func(value ref.Val) ref.Val {
@@ -174,8 +142,6 @@ var randomLowercaseFunc = &functions.Overload{
 }
 
 // 将字符串进行 base64 编码
-var base64StringDecl = decls.NewFunction("base64", decls.NewOverload(
-	"base64_string", []*exp.Type{decls.String}, decls.String))
 var base64StringFunc = &functions.Overload{
 	Operator: "base64_string",
 	Unary: func(value ref.Val) ref.Val {
@@ -188,8 +154,6 @@ var base64StringFunc = &functions.Overload{
 }
 
 // 将bytes进行 base64 编码
-var base64BytesDecl = decls.NewFunction("base64", decls.NewOverload(
-	"base64_bytes", []*exp.Type{decls.Bytes}, decls.String))
 var base64BytesFunc = &functions.Overload{
 	Operator: "base64_bytes",
 	Unary: func(value ref.Val) ref.Val {
@@ -202,8 +166,6 @@ var base64BytesFunc = &functions.Overload{
 }
 
 // 将字符串进行 base64 解码
-var base64DecodeStringDecl = decls.NewFunction("base64Decode", decls.NewOverload(
-	"base64Decode_string", []*exp.Type{decls.String}, decls.String))
 var base64DecodeStringFunc = &functions.Overload{
 	Operator: "base64Decode_string",
 	Unary: func(value ref.Val) ref.Val {
@@ -219,9 +181,7 @@ var base64DecodeStringFunc = &functions.Overload{
 	},
 }
 
-// 将bytes进行 base64 编码
-var base64DecodeBytesDecl = decls.NewFunction("base64Decode", decls.NewOverload(
-	"base64Decode_bytes", []*exp.Type{decls.Bytes}, decls.String))
+// 将bytes进行 base64 解码
 var base64DecodeBytesFunc = &functions.Overload{
 	Operator: "base64Decode_bytes",
 	Unary: func(value ref.Val) ref.Val {
@@ -238,8 +198,6 @@ var base64DecodeBytesFunc = &functions.Overload{
 }
 
 // 将字符串进行 urlencode 编码
-var urlencodeStringDecl = decls.NewFunction("urlencode", decls.NewOverload(
-	"urlencode_string", []*exp.Type{decls.String}, decls.String))
 var urlencodeStringFunc = &functions.Overload{
 	Operator: "urlencode_string",
 	Unary: func(value ref.Val) ref.Val {
@@ -252,8 +210,6 @@ var urlencodeStringFunc = &functions.Overload{
 }
 
 // 将bytes进行 urlencode 编码
-var urlencodeBytesDecl = decls.NewFunction("urlencode", decls.NewOverload(
-	"urlencode_bytes", []*exp.Type{decls.Bytes}, decls.String))
 var urlencodeBytesFunc = &functions.Overload{
 	Operator: "urlencode_bytes",
 	Unary: func(value ref.Val) ref.Val {
@@ -266,8 +222,6 @@ var urlencodeBytesFunc = &functions.Overload{
 }
 
 // 将字符串进行 urldecode 解码
-var urldecodeStringDecl = decls.NewFunction("urldecode", decls.NewOverload(
-	"urldecode_string", []*exp.Type{decls.String}, decls.String))
 var urldecodeStringFunc = &functions.Overload{
 	Operator: "urldecode_string",
 	Unary: func(value ref.Val) ref.Val {
@@ -284,8 +238,6 @@ var urldecodeStringFunc = &functions.Overload{
 }
 
 // 将 bytes 进行 urldecode 解码
-var urldecodeBytesDecl = decls.NewFunction("urldecode", decls.NewOverload(
-	"urldecode_bytes", []*exp.Type{decls.Bytes}, decls.String))
 var urldecodeBytesFunc = &functions.Overload{
 	Operator: "urldecode_bytes",
 	Unary: func(value ref.Val) ref.Val {
@@ -302,8 +254,6 @@ var urldecodeBytesFunc = &functions.Overload{
 }
 
 // 截取字符串
-var substrDecl = decls.NewFunction("substr", decls.NewOverload(
-	"substr_string_int_int", []*exp.Type{decls.String, decls.Int, decls.Int}, decls.String))
 var substrFunc = &functions.Overload{
 	Operator: "substr_string_int_int",
 	Function: func(values ...ref.Val) ref.Val {
@@ -332,8 +282,6 @@ var substrFunc = &functions.Overload{
 }
 
 // 暂停执行等待指定的秒数
-var sleepDecl = decls.NewFunction("sleep", decls.NewOverload(
-	"sleep_int", []*exp.Type{decls.Int}, decls.Null))
 var sleepFunc = &functions.Overload{
 	Operator: "sleep_int",
 	Unary: func(value ref.Val) ref.Val {
@@ -347,8 +295,6 @@ var sleepFunc = &functions.Overload{
 }
 
 // 反连平台结果
-var reverseWaitDecl = decls.NewFunction("wait", decls.NewInstanceOverload(
-	"reverse_wait_int", []*exp.Type{decls.Any, decls.Int}, decls.Bool))
 var reverseWaitFunc = &functions.Overload{
 	Operator: "reverse_wait_int",
 	Binary: func(lhs ref.Val, rhs ref.Val) ref.Val {
