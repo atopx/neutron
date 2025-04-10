@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file = fs::File::open(poc_path)?;
     let poc: poc::Poc = serde_yaml::from_reader(file)?;
 
-    println!("加载成功，POC 名称: {}", poc.name);
+    println!("加载成功, POC 名称: {}", poc.name);
 
     // 创建并运行 POC
     let runner = Runner::new(poc);

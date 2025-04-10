@@ -6,7 +6,7 @@ use crate::poc::{Poc, Rule};
 use crate::template;
 
 /// POC 执行结果
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RunResult {
     /// 是否成功
     pub success: bool,
@@ -14,16 +14,6 @@ pub struct RunResult {
     pub output: HashMap<String, String>,
     /// 信息
     pub message: String,
-}
-
-impl Default for RunResult {
-    fn default() -> Self {
-        Self {
-            success: false,
-            output: HashMap::new(),
-            message: String::new(),
-        }
-    }
 }
 
 /// POC 运行器
@@ -235,7 +225,7 @@ fn extract_rule_calls(expression: &str) -> Vec<String> {
     for part in expression.split(&['(', ')', '&', '|', '!', ' ']) {
         let part = part.trim();
         if !part.is_empty()
-            && !part.contains(&['+', '-', '*', '/', '.'])
+            && !part.contains(['+', '-', '*', '/', '.'])
             && !part.starts_with('"')
             && !part.starts_with('\'')
             && !part.eq("true")
