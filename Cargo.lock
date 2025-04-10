@@ -358,6 +358,8 @@ version = "0.1.0"
 dependencies = [
  "cel-interpreter",
  "chrono",
+ "memchr",
+ "regex",
  "serde",
  "serde_json",
  "serde_yaml",
