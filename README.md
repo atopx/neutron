@@ -56,7 +56,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer scanner.Release(scan)
 	wg := new(sync.WaitGroup)
 	wg.Add(len(urls))
 

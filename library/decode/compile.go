@@ -9,6 +9,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/ext"
 )
 
 type CelLibrary struct {
@@ -41,7 +42,15 @@ func (c *CelLibrary) UpdateCompileOptions(args map[string]string) {
 func NewCelOption() (c CelLibrary) {
 	// 使用新的 cel.Function API 替代已弃用的 cel.Declarations
 	c.EnvOptions = []cel.EnvOption{
-		cel.Container("proto"),
+		// 内置函数
+		ext.Strings(),
+		ext.Sets(),
+		ext.Bindings(),
+		ext.Encoders(),
+		ext.Math(),
+		ext.Lists(),
+		ext.Protos(),
+
 		// 对象类型注入
 		cel.Types(&proto.UrlType{}, &proto.Request{}, &proto.Response{}, &proto.Reverse{}),
 
